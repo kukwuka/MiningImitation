@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Client</title>
+</head>
+<body>
+<h1>This client, look to console</h1>
+<button onclick="CheckPocket()">check pocket</button>
+</body>
+
+<script>
+    const APIUrl = 'http://localhost:8080/api/';
+    let Nonce = 1;
+    const Key = Math.random().toString();
+    const Ip = Math.random().toString();
+    const delay = 15 * 1000; //sec * milisec
+
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('');
+        return hashHex;
+    }
+    //Register
+    function Register(){
+        let myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        let raw = JSON.stringify({"ip":Ip,"key":Key});
+
+        let requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: raw,
+            redirect: 'follow'
+        };
+        fetch(APIUrl +"register", requestOptions)
+            .then(response => response.text())
+            .then(result => console.log(result))
+            .catch(error => console.log('error', error));
+    }
+
+    //Mining
+    async function Mine(){
+        try{
+            let myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            let raw = JSON.stringify({"ip":Ip,"key":await sha256(Key+Nonce)});
+            let requestOptions = {
+                method: 'POST',
+                headers: myHeaders,
+                body: raw,
+                redirect: 'follow'
+            };
+            fetch(APIUrl+"faucet", requestOptions)
+                .then(response => response.json())
+                .then(result => console.log(result.message))
+                .catch(error => console.log('error', error));
+                Nonce +=1;
+        }catch (err) {
+            console.log(err)
+        }
+    }
+
+    function CheckPocket(){
+        let myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        let raw = JSON.stringify({"ip":Ip,"key":Key});
+
+        let requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: raw,
+            redirect: 'follow'
+        };
+
+        fetch(APIUrl+"info", requestOptions)
+            .then(response => response.text())
+            .then(result => alert(result))
+            .catch(error => console.log('error', error));
+    }
+    Register();
+    setInterval(Mine,delay);
+</script>
+</html>
