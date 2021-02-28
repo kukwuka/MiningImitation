@@ -51,7 +51,7 @@ router.post('/info',async (req,res)=>{
         const query = await Model.findOne({'ip':req.body.ip});
         const Randomkey = await Model.findOne({'ip':'Randomkey'});
         if(query.key === req.body.key){
-            res.status(200).json({'pocket':query.pocket,'RandomKey':Randomkey.key})
+            res.status(200).json({'pocket':query.pocket,'RandomKey':Randomkey.key,'Nonce':query.nonce})
         }else {
             res.status(403).json({'message':'incorrect key'});
         }
